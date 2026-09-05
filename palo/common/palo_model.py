@@ -156,6 +156,20 @@ def _nat_translation(entry: ET.Element, tag: str) -> str:
     return ""
 
 
+def _nat_translation_refs(entry: ET.Element, tag: str) -> List[str]:
+    """All translated address dependencies; retain the separate display summary."""
+    root = entry.find(tag)
+    if root is None:
+        return []
+    out: List[str] = []
+    for address in root.iter("translated-address"):
+        values = [_text(m) for m in address.findall("member")] or [_text(address)]
+        for value in values:
+            if value and value not in out:
+                out.append(value)
+    return out
+
+
 def detect_export_kind(root: ET.Element) -> ExportKind:
     """Classify a PAN-OS XML export as standalone firewall vs Panorama."""
     dg_entries = root.findall(_DG_XPATH)
@@ -945,6 +959,8 @@ class PaloStandaloneModel:
             "service": join_m(entry, "service"),
             "source_translation": _nat_translation(entry, "source-translation"),
             "dest_translation": _nat_translation(entry, "destination-translation"),
+            "source_translation_refs": _nat_translation_refs(entry, "source-translation"),
+            "dest_translation_refs": _nat_translation_refs(entry, "destination-translation"),
         }
         if scope:
             row["vsys"] = scope
@@ -1298,6 +1314,8 @@ class PaloPanoramaModel:
                 "service": join_m(entry, "service"),
                 "source_translation": _nat_translation(entry, "source-translation"),
                 "dest_translation": _nat_translation(entry, "destination-translation"),
+                "source_translation_refs": _nat_translation_refs(entry, "source-translation"),
+                "dest_translation_refs": _nat_translation_refs(entry, "destination-translation"),
             },
             entry,
         )

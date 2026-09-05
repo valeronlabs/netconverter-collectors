@@ -14,9 +14,9 @@
     },
     "fmc": {
       "entry": "cisco/fmc/fmc_collect_data.py",
-      "sha256": "c459079ac95882c02257445156c4bac1ce88851cb7180399857e555998c19e15",
+      "sha256": "7d4d37672481f307a6ebc75773f6402ec9c6d4ad6835df36b74e09d0a7f67d7c",
       "status": "ready",
-      "version": "2.3.0"
+      "version": "2.3.1"
     },
     "fortinet": {
       "entry": "fortinet/fortimanager/fortimanager_collect.py",
@@ -26,11 +26,11 @@
     },
     "palo": {
       "entry": "palo/panorama/panorama_export.py",
-      "sha256": "548ed8ab3a2c91d048bfa5905cca699ffb5175a45a1c4b6cc58c0dc79cd8c8d3",
+      "sha256": "b7fa70a0059b950c7525e75900c7db20b134e7eb1600af1a54fe2b8ed6b97749",
       "status": "ready",
-      "version": "1.7.0"
+      "version": "1.7.1"
     }
   },
-  "generated_at": "2026-08-24T15:12:39Z",
+  "generated_at": "2026-09-05T21:55:59Z",
   "schema": 1
 }

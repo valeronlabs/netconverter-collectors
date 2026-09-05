@@ -4,6 +4,11 @@ All notable changes to the FMC collector and its HTML builder. Collect and HTML
 share one `__version__`. Versions are independent of other collectors and of
 the NetConverter.local appliance.
 
+## [2.3.1] — 2026-09-05
+
+- Collect IPv6 static routes independently of IPv4 routes. A populated IPv4 table no longer suppresses IPv6 collection; the legacy IPv4 endpoint remains a fallback only.
+- HTML viewer version updated to 2.3.1. Synthetic dual-stack and IPv4-fallback regression coverage added.
+
 ## [2.3.0] — 2026-06-22
 ### Added
 - Per-run completeness self-audit (`completeness.csv`) + a Completeness page

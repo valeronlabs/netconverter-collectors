@@ -17,7 +17,7 @@ License: MIT
 
 from __future__ import annotations
 
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 
 import argparse
 import base64
@@ -954,10 +954,9 @@ def collect_device_details(
             f"/devices/devicerecords/{did}/physicalinterfaces",
             f"/devices/devicerecords/{did}/fpphysicalinterfaces",
         )
-        route_paths = (
+        ipv4_route_paths = (
             f"/devices/devicerecords/{did}/routing/ipv4staticroutes",
             f"/devices/devicerecords/{did}/routing/staticroutes",
-            f"/devices/devicerecords/{did}/routing/ipv6staticroutes",
         )
         extra_iface_paths = (
             f"/devices/devicerecords/{did}/logicalinterfaces",
@@ -977,11 +976,14 @@ def collect_device_details(
             if isinstance(body, dict) and body.get("_error"):
                 errors.append(f"interfaces: HTTP {body['_error']}")
 
-        for path in route_paths:
+        for path in ipv4_route_paths:
             batch = client.get_all(path, expanded=True)
             if batch:
                 routes = batch
                 break
+        # IPv6 is an independent address family, never an IPv4 fallback.
+        routes.extend(client.get_all(
+            f"/devices/devicerecords/{did}/routing/ipv6staticroutes", expanded=True))
 
         for path in extra_iface_paths:
             batch = client.get_all(path, expanded=True)

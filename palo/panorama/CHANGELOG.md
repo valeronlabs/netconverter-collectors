@@ -4,6 +4,11 @@ All notable changes to the Palo Alto Panorama export bundle (`panorama_export.py
 HTML browsers, and shared models). Collect (`panorama_export.py`) and HTML
 (`palo/common/html_version.py`) share version **1.7.0**.
 
+## [1.7.1] — 2026-09-05
+
+- Preserve all source/destination NAT translated-address dependencies in additive reference lists, including dynamic pools. Existing translation display strings are unchanged.
+- Collector and shared HTML version updated to 1.7.1; added synthetic multi-address pool regression coverage.
+
 ## [1.7.0] — 2026-08-23
 
 ### Added

@@ -610,3 +610,20 @@ if __name__ == "__main__":
         fn()
         print(f"ok {fn.__name__}")
     print(f"All {len(tests)} tests passed.")
+
+
+def test_nat_pool_dependencies_preserve_display_summary():
+    from palo_model import _nat_translation, _nat_translation_refs
+    entry = ET.fromstring('''<entry><source-translation><dynamic-ip-and-port>
+      <translated-address><member>pool-a</member><member>pool-b</member></translated-address>
+      </dynamic-ip-and-port></source-translation><destination-translation>
+      <translated-address>server</translated-address><translated-port>8443</translated-port>
+      </destination-translation></entry>''')
+    assert _nat_translation(entry, 'source-translation') == 'pool-a'
+    assert _nat_translation_refs(entry, 'source-translation') == ['pool-a', 'pool-b']
+    assert _nat_translation_refs(entry, 'destination-translation') == ['server']
+    for cls in (PaloStandaloneModel, PaloPanoramaModel):
+        model = cls(Path('unused.xml'))
+        row = model._parse_nat_rule(entry, 'scope', 'pre-rulebase')
+        assert row['source_translation_refs'] == ['pool-a', 'pool-b']
+        assert row['dest_translation_refs'] == ['server']
