@@ -4,6 +4,22 @@ All notable changes to the FMC collector and its HTML builder. Collect and HTML
 share one `__version__`. Versions are independent of other collectors and of
 the NetConverter.local appliance.
 
+## [2.3.2] — 2026-09-06
+
+- Preserve native policy assignments in `policy-assignments.json`, including
+  policy and target type/ID fields even when device records omit ACP/NAT links.
+- Record separate per-endpoint `collection-evidence.json`: pagination totals,
+  requested offsets, timestamps, success/empty/partial/error, and route-family
+  fallback outcomes. Native device, object, assignment and rule JSON is unchanged.
+- Follow server-shortened pages and same-origin/same-endpoint next offsets;
+  reject repeated/skipped pages, changing totals and redirects. Failed later pages
+  remain explicitly partial. Bound collection by page and item limits.
+- Save successfully empty rule arrays. Completeness uses recorded FMC totals for
+  each endpoint/policy, never a captured count presented as an independent total.
+  HTTP errors do not establish that a feature is unsupported by the platform.
+- HTML generation works with core 1.1.2, including empty bundles; CSV actions
+  explicitly export the filtered rows. An older core must be upgraded with FMC.
+
 ## [2.3.1] — 2026-09-05
 
 - Collect IPv6 static routes independently of IPv4 routes. A populated IPv4 table no longer suppresses IPv6 collection; the legacy IPv4 endpoint remains a fallback only.

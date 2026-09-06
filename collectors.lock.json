@@ -8,15 +8,15 @@
     },
     "core": {
       "entry": "core/manifest.py",
-      "sha256": "32fec1634c86d4e29baefccf15910b48713848b91b6ce440d1cf63cf99946de4",
+      "sha256": "095630d24f7abea8a6b3466dc1eed747ffb8471c55995c320407da7a6032c62e",
       "status": "library",
-      "version": "1.1.1"
+      "version": "1.1.2"
     },
     "fmc": {
       "entry": "cisco/fmc/fmc_collect_data.py",
-      "sha256": "7d4d37672481f307a6ebc75773f6402ec9c6d4ad6835df36b74e09d0a7f67d7c",
+      "sha256": "117dbf1fc76499788f88fcb6edb8ce04fefdf5776e9fe8d47269b1911408f064",
       "status": "ready",
-      "version": "2.3.1"
+      "version": "2.3.2"
     },
     "fortinet": {
       "entry": "fortinet/fortimanager/fortimanager_collect.py",
@@ -26,11 +26,11 @@
     },
     "palo": {
       "entry": "palo/panorama/panorama_export.py",
-      "sha256": "b7fa70a0059b950c7525e75900c7db20b134e7eb1600af1a54fe2b8ed6b97749",
+      "sha256": "372f40facf2e05139a361619a0e97d0e53b71af20ebaaa1542518e76c5377781",
       "status": "ready",
-      "version": "1.7.1"
+      "version": "1.7.2"
     }
   },
-  "generated_at": "2026-09-05T21:55:59Z",
+  "generated_at": "2026-09-06T14:07:58Z",
   "schema": 1
 }

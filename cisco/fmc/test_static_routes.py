@@ -10,7 +10,7 @@ import fmc_collect_data as collector
 class StaticRouteCollectionTests(unittest.TestCase):
     def collect(self, primary, fallback, ipv6):
         client = Mock()
-        client.get_json.return_value = {'id': 'lab', 'name': 'lab'}
+        client.capture_record.return_value = {'id': 'lab', 'name': 'lab'}
         calls = []
         def get_all(path, **kwargs):
             calls.append(path.rsplit('/', 1)[-1])
