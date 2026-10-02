@@ -47,16 +47,16 @@ zip whose stated collector versions disagree with its contents.
 ## Publishing
 
 This tree is private. The repo customers are pointed at is
-[netconverter-ai/netconverter-tools](https://github.com/netconverter-ai/netconverter-tools),
-which is public. Publishing is **one-way** — private dev tree → public tools repo.
+[valeronlabs/netconverter-collectors](https://github.com/valeronlabs/netconverter-collectors),
+which is public. Publishing is **one-way** — private dev tree → public collectors repo.
 Never sync the other direction: this tree holds scaffolds and work-in-progress
 that must not ship.
 
 ```bash
 python3 scripts/gen_collectors_lock.py          # after any __version__ bump
 python3 scripts/gen_collectors_lock.py --check  # must pass before publishing
-python3 scripts/publish_public.py --target ../netconverter-tools --dry-run
-python3 scripts/publish_public.py --target ../netconverter-tools
+python3 scripts/publish_public.py --target ../netconverter-collectors-public --dry-run
+python3 scripts/publish_public.py --target ../netconverter-collectors-public
 ```
 
 `publish_public.py` ships every collector whose lockfile status is `ready` or

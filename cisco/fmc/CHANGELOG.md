@@ -4,6 +4,18 @@ All notable changes to the FMC collector and its HTML builder. Collect and HTML
 share one `__version__`. Versions are independent of other collectors and of
 the NetConverter.local appliance.
 
+## Unreleased — capture readiness integration
+
+- Add explicit selected-domain/device supplementary evidence collection using
+  the canonical FMC client. Verify native device identity before querying
+  interfaces and configured routes; retain partial results and retry failures.
+- Enforce trusted TLS, refuse redirects and configuration writes, bound response
+  sizes, support cancellation, and retain exact configuration GET response bytes
+  separately from parsed JSON. Authentication responses are excluded.
+- This manager evidence does not establish deployment state or replace the
+  complete policy/object collector. Validation is synthetic/offline; live
+  acceptance and release publication are pending.
+
 ## [2.3.3] — 2026-09-19
 
 ### Fixed

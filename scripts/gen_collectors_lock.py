@@ -72,7 +72,7 @@ def build_lock(repo_root: Path) -> dict:
     """Build the deterministic lock body (no timestamp — added by main()).
 
     A collector whose folders are absent is skipped with a notice rather than
-    raising. The published subset in netconverter-tools ships only the "ready"
+    raising. The published subset in valeronlabs/netconverter-collectors ships only the "ready"
     and "library" collectors, and this script travels with it so a reader can
     regenerate the lockfile and verify the tree they downloaded.
     """

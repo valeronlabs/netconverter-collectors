@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Publish the public-safe subset of this tree to netconverter-ai/netconverter-tools.
+"""Publish the public-safe subset of this tree to valeronlabs/netconverter-collectors.
 
 This repo is PRIVATE. The repo customers are pointed at is
-https://github.com/netconverter-ai/netconverter-tools (public). Publishing is
-one-way: private dev tree -> public tools repo. Never sync the other direction;
+https://github.com/valeronlabs/netconverter-collectors (public). Publishing is
+one-way: private dev tree -> public collectors repo. Never sync the other direction;
 this tree holds scaffolds and work-in-progress that must not ship.
 
 What gets published is driven by collectors.lock.json: every collector whose
@@ -20,8 +20,8 @@ are left untouched in the target, and README.md is rendered rather than copied
 so publishing cannot silently drop them from the index.
 
 Usage:
-    python3 scripts/publish_public.py --target ../netconverter-tools --dry-run
-    python3 scripts/publish_public.py --target ../netconverter-tools
+    python3 scripts/publish_public.py --target ../netconverter-collectors-public --dry-run
+    python3 scripts/publish_public.py --target ../netconverter-collectors-public
 """
 from __future__ import annotations
 
@@ -214,7 +214,7 @@ def render_stamp(lock: dict, commit: str) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--target", required=True, help="path to the netconverter-tools checkout")
+    ap.add_argument("--target", required=True, help="path to the valeronlabs/netconverter-collectors checkout")
     ap.add_argument("--dry-run", action="store_true", help="report actions, write nothing")
     args = ap.parse_args()
 

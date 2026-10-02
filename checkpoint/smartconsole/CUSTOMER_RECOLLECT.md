@@ -12,7 +12,7 @@ You do **not** need to re-export objects, access layers, NAT, or HTTPS if you al
 
 ## 1 — Get v1.5.6
 
-GitHub: https://github.com/netconverter-ai/netconverter-tools  
+GitHub: https://github.com/valeronlabs/netconverter-collectors  
 Folder: `checkpoint/smartconsole/`
 
 Confirm version:

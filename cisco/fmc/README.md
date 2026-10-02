@@ -156,6 +156,24 @@ python backfill_device_details.py --input run-YYYYMMDD-HHMMSS \
 python build_html.py --input run-YYYYMMDD-HHMMSS
 ```
 
+## Supplementary selected-device evidence (development)
+
+`device_evidence.py` exposes an explicit collection adapter for a selected FMC
+domain and device. It uses the existing client and pagination accounting, first
+checks native identity, and then requests physical/logical/bridge interfaces and
+configured IPv4/IPv6 routes. It never installs policy or writes device settings.
+
+Receipts bind the selected source revision, scope, time, content hash and
+collector version. Configuration GET responses retain their exact bytes inside
+an `nc.fmc-api-responses.v1` envelope alongside the parsed result. Failed and
+partial endpoints remain explicit. Token responses are never included. Trusted
+TLS is required; this adapter has no insecure switch.
+
+The caller must preview the scope and obtain an explicit collection action.
+Manager results are not observed FTD deployment state. Existing complete
+policy/object collection remains separate. Current validation uses synthetic
+clients; this adapter is not yet a live-validated release.
+
 ## License
 
 MIT — ValeronLabs LLC / NetConverter

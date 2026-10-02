@@ -122,7 +122,7 @@ python3 scripts/gen_collectors_lock.py --check
 Recomputes every folder hash and exits non-zero on any mismatch. Standard
 library only.
 
-Source and changelog: https://github.com/netconverter-ai/netconverter-tools
+Source and changelog: https://github.com/valeronlabs/netconverter-collectors
 """
 
 

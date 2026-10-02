@@ -79,7 +79,7 @@ TROUBLESHOOTING
 --------------------------------------------------------------------------------
 SOURCE / LATEST
 --------------------------------------------------------------------------------
-  GitHub (public): https://github.com/netconverter-ai/netconverter-tools
+  GitHub (public): https://github.com/valeronlabs/netconverter-collectors
   Path: checkpoint/smartconsole/
   Version in this package: 1.5.6
   Re-collect after an older zip: CUSTOMER_RECOLLECT.md

@@ -1,5 +1,14 @@
 # Changelog — shared collector core (`core/`)
 
+## [1.2.0] — 2026-09-30
+
+- Add versioned capture receipts with device scope, source revision, observation time,
+  response hashes and explicit request failures. Preserve successful prior attempts.
+- Validate imported receipt integrity and distinguish incompatible revisions and
+  conflicting identities. Evidence never approves unsupported translation semantics.
+- Add bounded offline evidence bundles with exact receipt/response validation,
+  duplicate and unsafe-path rejection, and no filesystem archive extraction.
+
 ## [1.1.2] — 2026-09-06
 
 - `SiteBuilder.searchbox` accepts optional `export_csv` and renders the existing

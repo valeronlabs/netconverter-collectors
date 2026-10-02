@@ -55,7 +55,7 @@ Usage:
 License: MIT
 """
 
-__version__ = "1.7.2"
+__version__ = "1.8.0"
 
 import argparse
 import re
@@ -756,6 +756,21 @@ def parse_bool(val):
     return str(val).strip().lower() in ("1", "true", "yes", "y", "on")
 
 
+def collect_requested_device_evidence(args, api_key):
+    if not args.device_evidence:
+        return
+    from device_evidence import collect
+    import hashlib
+    source_revision = hashlib.sha256(Path(args.output).read_bytes()).hexdigest()
+    output = Path(args.output).with_suffix('.evidence')
+    for serial in dict.fromkeys(args.device_evidence):
+        result = collect(args.panorama, api_key, serial, output,
+            profile=args.device_evidence_profile, version=__version__, source_revision=source_revision,
+            on_progress=lambda row: print("  device evidence: " + row['kind'] + " / " + row['status']))
+        if not result['complete']:
+            print("  Device evidence incomplete; successful responses and failure receipts retained.")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="NetConverter -- Export Panorama device-group(s) and "
@@ -825,7 +840,13 @@ def main():
     parser.add_argument("--insecure", action="store_true",
                         help="Disable HTTPS certificate verification "
                              "(for self-signed lab certs)")
+    parser.add_argument("--device-evidence", action="append", default=[], metavar="SERIAL",
+                        help="Explicitly collect selected firewall local/pushed configuration through Panorama; repeat per serial. Requires verified TLS.")
+    parser.add_argument("--device-evidence-profile", choices=("configuration", "operational"), default="configuration")
     args = parser.parse_args()
+    if args.device_evidence and args.insecure:
+        parser.error("Selected-device evidence requires verified TLS; install the trusted CA first.")
+
 
     verify_ssl = not args.insecure
     include_children = parse_bool(args.include_children)
@@ -950,6 +971,7 @@ def main():
         print(f"  hierarchy:       {ancestry['status'].upper()}")
         print("  capture:         single configuration export; device-local/operational completeness is not implied")
         print(f"  output:          {args.output} ({size_bytes:,} bytes)")
+        collect_requested_device_evidence(args, api_key)
         print(f"{'=' * 60}")
         return 0 if ancestry["complete"] else 3
 
@@ -1230,6 +1252,7 @@ def main():
     # The first write preserved useful partial output if the audit failed.
     # Persist its actual outcome instead of leaving completeness only in logs.
     write_xml_file(root_elem, args.output)
+    collect_requested_device_evidence(args, api_key)
     print(f"  completeness:    {_state}")
     print(f"  output:          {args.output} ({size_bytes:,} bytes)")
     if total_attempted > 0:

@@ -2,7 +2,18 @@
 
 All notable changes to the Palo Alto Panorama export bundle (`panorama_export.py`,
 HTML browsers, and shared models). Collect (`panorama_export.py`) and HTML
-(`palo/common/html_version.py`) share version **1.7.2**.
+(`palo/common/html_version.py`) share version **1.8.0**.
+
+## [1.8.0] — 2026-09-30
+
+- Add explicitly selected read-only device evidence capture through Panorama,
+  with TLS validation, serial verification, separate native responses, cancellation
+  and failed-step retry. Unsupported endpoints retain failure receipts.
+- Interpret retained Used/Unused/Partial rule observations as device-group evidence,
+  never as packet counters or cleanup eligibility. Missing serial, pre/post scope
+  and observation time remain explicit.
+- Mocked API and offline integrity tests cover this increment; version-specific
+  live device command acceptance remains unverified.
 
 ## [1.7.2] — 2026-09-06
 

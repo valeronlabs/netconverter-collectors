@@ -8,13 +8,13 @@
     },
     "core": {
       "entry": "core/manifest.py",
-      "sha256": "095630d24f7abea8a6b3466dc1eed747ffb8471c55995c320407da7a6032c62e",
+      "sha256": "d509affb423ec51c97482d3d92351542c76ccc51704c5c3878d13d4442739ba7",
       "status": "library",
-      "version": "1.1.2"
+      "version": "1.2.0"
     },
     "fmc": {
       "entry": "cisco/fmc/fmc_collect_data.py",
-      "sha256": "e13614ef752cdf3e37cfb26664076815fa6ba85973878423d6f434c976085b9c",
+      "sha256": "adf76865f47454d1307104f8477f2e8152461912449620e189f8783129f5985f",
       "status": "ready",
       "version": "2.3.3"
     },
@@ -26,11 +26,11 @@
     },
     "palo": {
       "entry": "palo/panorama/panorama_export.py",
-      "sha256": "372f40facf2e05139a361619a0e97d0e53b71af20ebaaa1542518e76c5377781",
+      "sha256": "1ee44b44c14c6497ab7efefd27623437279754b863021354df6f705ab740473e",
       "status": "ready",
-      "version": "1.7.2"
+      "version": "1.8.0"
     }
   },
-  "generated_at": "2026-09-24T20:36:28Z",
+  "generated_at": "2026-09-30T21:19:42Z",
   "schema": 1
 }
