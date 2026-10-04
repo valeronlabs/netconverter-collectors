@@ -1249,10 +1249,10 @@ def apply_policy_names(data: Dict, access_name: Optional[str] = None,
 
 
 def import_receipt(report: Report, artifact_hash: str, version: Optional[str],
-                   domain: str, dry_run: bool) -> Dict:
+                   domain: Optional[str], dry_run: bool) -> Dict:
     return {"schema": "nc.fmc-import-receipt.v1", "artifact_sha256": artifact_hash,
         "importer_version": __version__, "fmc_version": version, "domain_id": domain,
-        "status": "dry_run" if dry_run else ("incomplete" if report.failures else "imported"),
+        "status": "incomplete" if report.failures else ("dry_run" if dry_run else "imported"),
         "assigned": False, "deployed": False, "policies": report.policies,
         "counts": report.counts, "object_renames": report.renames,
         "warnings": report.warnings, "failures": report.failures}
@@ -1359,6 +1359,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         client, version = connect(args.host, args.user, password, args.verify_ssl, http=requests)
     except FMCError as exc:
         print(f"AUTH FAILED: {exc}")
+        if args.report_json:
+            failed = Report()
+            failed.fail("authentication", "FMC", "authentication did not complete", exc.status)
+            try:
+                write_receipt(args.report_json, import_receipt(failed,
+                    hashlib.sha256(artifact).hexdigest(), None, None, args.dry_run))
+            except OSError:
+                print("ERROR: authentication failure receipt could not be written")
         return 1
     except OSError as exc:
         print(f"ERROR: cannot reach {args.host}: {exc}")
