@@ -1,4 +1,4 @@
-# FMC Import Script
+# FMC Import Script — v2.2.1
 
 Push NetConverter-generated FMC JSON files to a live Cisco Secure Firewall Management Center (FMC) via the REST API.
 
@@ -45,7 +45,7 @@ You'll be prompted for the password securely (not echoed to terminal).
 python3 fmc_import.py --host 10.1.1.100 --user admin --json converted_output.json --dry-run
 ```
 
-Dry run shows exactly what would be created without making any changes to your FMC. Always recommended before your first live import.
+Dry run authenticates and reads the FMC to resolve existing references and conflicts; it posts no configuration changes. Always recommended before your first live import.
 
 ### All Options
 
@@ -60,6 +60,8 @@ Required:
 Optional:
   --password PASS   FMC password (prompted if not provided)
   --dry-run         Preview without making changes
+  --reuse-policy    Explicitly reuse an existing named access/NAT policy
+  --version         Print importer version
   --verify-ssl      Verify SSL certificate (default: skip for self-signed)
 ```
 
@@ -105,7 +107,7 @@ NOTE: Deploy changes to managed devices for rules to take effect.
 
 - **Deploy after import**: FMC holds changes in a staging area. You must deploy to managed devices from the FMC UI for rules to take effect.
 - **Skipped objects**: Objects that already exist on the FMC are automatically skipped (not duplicated).
-- **Existing policies**: If an access policy with the same name exists, rules are added to it.
+- **Existing policies**: By default, a name collision creates a uniquely named policy. Use `--reuse-policy` explicitly to write into an existing policy; rule insertion retains file order and detects conflicts.
 - **SSL certificates**: Most FMC installations use self-signed certificates. The script skips SSL verification by default. Use `--verify-ssl` if your FMC has a trusted certificate.
 
 ## Generating the FMC JSON File
