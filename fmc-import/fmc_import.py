@@ -421,6 +421,13 @@ class Report:
         # policies: counts are then also kept per policy and failures name it.
         self.scope: Optional[str] = None
         self.policies: List[Dict[str, Any]] = []
+        self.skipped: List[Dict[str, Any]] = []
+
+    def record_skip(self, phase: str, name: str, reason: str) -> None:
+        entry = {"phase": phase, "name": name, "reason": reason}
+        if self.scope:
+            entry["policy"] = self.scope
+        self.skipped.append(entry)
 
     @staticmethod
     def label(phase: str, policy: Optional[str]) -> str:
@@ -826,6 +833,7 @@ class Importer:
         if existing_diff is None:
             print(f"    REUSE {name} (identical definition already on FMC)")
             self.report.count("objects", "reused")
+            self.report.record_skip("objects", name, "identical definition already exists on FMC")
             return
         if existing_diff == "the file defines this name twice":
             self.blocked[(family, name.lower())] = "is defined twice in the file; not created"
@@ -847,6 +855,7 @@ class Importer:
                     self.report.rename(name, target_name, f"FMC already has '{name}': {existing_diff}; "
                                        f"reusing the identical '{target_name}'")
                     self.report.count("objects", "reused")
+                    self.report.record_skip("objects", target_name, "identical renamed definition already exists on FMC")
                     return
                 if again is False:
                     break
@@ -1049,6 +1058,7 @@ class Importer:
                 if _access_rule_signature(by_name[name.lower()]) == _access_rule_signature(payload):
                     print(f"    SKIP {name} (identical rule already in '{policy_name}')")
                     self.report.count(phase, "already present")
+                    self.report.record_skip(phase, name, "identical access rule already exists in the policy")
                 else:
                     self.report.fail(phase, name, f"rule name collision: a different rule named "
                                      f"'{name}' already exists in policy '{policy_name}'; not created")
@@ -1157,6 +1167,8 @@ class Importer:
             if clean.pop("enabled", True) is False:
                 self.report.warn(f"{label}: disabled Auto NAT rule not created "
                                  "(FMC Auto NAT rules cannot be disabled)")
+                self.report.record_skip(phase, label, "disabled Auto NAT rule cannot be created on FMC")
+                self.report.count(phase, "skipped")
                 return
             for fld in ("originalPort", "translatedPort"):
                 if fld in clean:
@@ -1186,6 +1198,7 @@ class Importer:
         if _nat_signature(clean) in existing:
             print(f"    SKIP {label} (identical {'Auto' if is_auto else 'manual'} NAT rule already in the policy)")
             self.report.count(phase, "already present")
+            self.report.record_skip(phase, label, "identical NAT rule already exists in the policy")
             return
         if self.dry_run:
             self.report.count(phase, "would create")
@@ -1255,6 +1268,7 @@ def import_receipt(report: Report, artifact_hash: str, version: Optional[str],
         "status": "incomplete" if report.failures else ("dry_run" if dry_run else "imported"),
         "assigned": False, "deployed": False, "policies": report.policies,
         "counts": report.counts, "object_renames": report.renames,
+        "skipped_items": report.skipped,
         "warnings": report.warnings, "failures": report.failures}
 
 
@@ -1370,6 +1384,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 1
     except OSError as exc:
         print(f"ERROR: cannot reach {args.host}: {exc}")
+        if args.report_json:
+            failed = Report()
+            failed.fail("connection", "FMC", "connection did not complete")
+            try:
+                write_receipt(args.report_json, import_receipt(failed,
+                    hashlib.sha256(artifact).hexdigest(), None, None, args.dry_run))
+            except OSError:
+                print("ERROR: connection failure receipt could not be written")
         return 1
     print(f"  Authenticated. FMC {version or 'unknown'}, Domain: {client.domain}")
 
@@ -1379,7 +1401,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         try:
             receipt = import_receipt(report, hashlib.sha256(artifact).hexdigest(), version,
                                      client.domain, args.dry_run)
-            for field in ('warnings', 'failures', 'object_renames'):
+            for field in ('warnings', 'failures', 'object_renames', 'skipped_items'):
                 receipt[field] = redact_receipt(receipt[field], [password, getattr(client, "token", ""), getattr(client, "refresh_token", "")])
             write_receipt(args.report_json, receipt)
         except OSError as exc:

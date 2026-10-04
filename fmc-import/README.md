@@ -149,7 +149,8 @@ Without overrides names come from the file. Existing same-named policies are lef
 unique names are chosen unless `--reuse-policy` deliberately selects the existing policies.
 
 The receipt records the original artifact SHA-256, importer/FMC version, authenticated domain,
-requested and actual policy names/IDs, per-policy counts, object renames, warnings and failures.
+requested and actual policy names/IDs, per-policy counts, object renames, skipped items with reasons,
+warnings and failures. Authentication and connection failures produce an incomplete receipt.
 Dry-run policy IDs are absent for policies that would be created. An incomplete import exits nonzero.
 Inspect actual names before retrying: target them explicitly with naming overrides and `--reuse-policy`
 when resuming a single-policy import, rather than accidentally creating additional policies.
