@@ -135,3 +135,31 @@ Tested with FMC 7.2+ through 7.6.5. The script uses stable v1 REST API endpoints
 ## License
 
 MIT License - see [LICENSE](../LICENSE) for details.
+
+## Version 2.3.0: policy names and import receipts
+
+```sh
+python3 fmc_import.py --host FMC_HOST --user FMC_USER --json converted_output.json --verify-ssl --dry-run --access-policy-name NC-Access --nat-policy-name NC-NAT --report-json preview.json
+python3 fmc_import.py --host FMC_HOST --user FMC_USER --json converted_output.json --verify-ssl --access-policy-name NC-Access --nat-policy-name NC-NAT --report-json import-receipt.json
+```
+
+Passwords are prompted. Each naming override requires exactly one policy of that type in the file;
+zero/multiple policies or invalid names refuse before authentication. The original JSON is unchanged.
+Without overrides names come from the file. Existing same-named policies are left untouched and fresh
+unique names are chosen unless `--reuse-policy` deliberately selects the existing policies.
+
+The receipt records the original artifact SHA-256, importer/FMC version, authenticated domain,
+requested and actual policy names/IDs, per-policy counts, object renames, warnings and failures.
+Dry-run policy IDs are absent for policies that would be created. An incomplete import exits nonzero.
+Inspect actual names before retrying: target them explicitly with naming overrides and `--reuse-policy`
+when resuming a single-policy import, rather than accidentally creating additional policies.
+
+**Import is not assignment or deployment.** Use the receipt's actual names/IDs to find policies in FMC.
+Bind FTD data interfaces to the imported security zones, recreate required routing and declared device
+settings, complete any VPN endpoint/certificate prerequisites, assign access and NAT policies to the
+intended managed FTD, then deploy through FMC and test permit/deny/NAT traffic. The script performs
+none of those device-level steps. Back up existing assignments/configuration before changing them.
+Do not delete shared/reused objects as a rollback shortcut.
+
+Version 2.3.0 has focused mocked-API verification; new CLI/receipt behavior still needs a live FMC
+retest. Existing lab proof for 2.2.1 must not be presented as a 2.3.0 deployment proof.

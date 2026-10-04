@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-NetConverter.AI — FMC Import Script  (version 2.2.1)
+NetConverter.AI — FMC Import Script  (version 2.3.0)
 
 Imports a NetConverter FMC JSON file into a Cisco Secure Firewall Management Center
 via the FMC REST API. Run this on any machine that can reach your FMC.
@@ -42,6 +42,8 @@ Behaviour you can rely on:
 
 Changelog
 ---------
+2.3.0 (2026-10-04)  Single-policy naming overrides, requested/actual policy identities,
+                    per-policy counts and optional JSON import receipts. No assignment/deployment.
 2.2.1 (2026-10-04)  A session FMC invalidated mid-import (another login with the same
                     account; FMC keeps one REST session per user) is re-established
                     with the credentials already given, up to 3 times. Before, the
@@ -103,15 +105,19 @@ Changelog
 
 import argparse
 import hashlib
+import copy
+from pathlib import Path
 import ipaddress
 import json
 import sys
 import time
+import os
+import tempfile
 from datetime import datetime, timezone
 from getpass import getpass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-__version__ = "2.2.1"
+__version__ = "2.3.0"
 
 try:
     import requests
@@ -414,6 +420,7 @@ class Report:
         # The policy rules are going into, set only when the file has several
         # policies: counts are then also kept per policy and failures name it.
         self.scope: Optional[str] = None
+        self.policies: List[Dict[str, Any]] = []
 
     @staticmethod
     def label(phase: str, policy: Optional[str]) -> str:
@@ -655,6 +662,7 @@ class Importer:
     def __init__(self, client: FMCClient, data: Dict, dry_run: bool = False,
                  reuse_policy: bool = False, stamp: Optional[str] = None):
         self.client = client
+        data = copy.deepcopy(data)
         self.objects = data.get("objects") or {}
         self.policies = data.get("policies") or {}
         _normalize_feed_types(self.objects, self.policies)
@@ -900,31 +908,33 @@ class Importer:
     # --- policies ------------------------------------------------------------
     def _choose_policy(self, phase: str, path: str, wanted: str,
                        payload: Dict) -> Optional[Tuple[str, str, bool]]:
-        """(policy id, name, reused?) — never silently writes into an existing policy."""
         existing = {str(p.get("name", "")).lower(): p
                     for p in self.client.list_all(path, expanded=False)}
         name = wanted
-        if wanted.lower() in existing:
-            if self.reuse_policy:
-                pol = existing[wanted.lower()]
-                print(f"  Using existing {phase} policy '{pol['name']}' (--reuse-policy)")
-                return pol["id"], pol["name"], True
-            name = f"{wanted}-{self.stamp}"
-            n = 2
-            while name.lower() in existing:
-                name = f"{wanted}-{self.stamp}-{n}"
-                n += 1
-            self.report.warn(f"{phase} policy '{wanted}' already exists on FMC and was left "
-                             f"untouched; creating '{name}' instead "
-                             f"(pass --reuse-policy to write into the existing one)")
-        if self.dry_run:
-            print(f"  [DRY RUN] would create {phase} policy '{name}'")
-            return DRY_RUN_ID, name, False
-        created = self._post(phase, f"policy '{name}'", path, {**payload, "name": name})
-        if created is None or not created.get("id"):
-            return None
-        print(f"  Created {phase} policy '{name}'")
-        return created["id"], name, False
+        reused = wanted.lower() in existing and self.reuse_policy
+        if reused:
+            pol = existing[wanted.lower()]
+            policy_id, name = pol["id"], pol["name"]
+        else:
+            if wanted.lower() in existing:
+                name = f"{wanted}-{self.stamp}"
+                n = 2
+                while name.lower() in existing:
+                    name = f"{wanted}-{self.stamp}-{n}"
+                    n += 1
+                self.report.warn(f"{phase} policy '{wanted}' left untouched; using '{name}'")
+            if self.dry_run:
+                policy_id = DRY_RUN_ID
+            else:
+                created = self._post(phase, f"policy '{name}'", path, {**payload, "name": name})
+                if created is None or not created.get("id"):
+                    return None
+                policy_id = created["id"]
+        self.report.policies.append({"kind": phase, "requested_name": wanted,
+            "actual_name": name, "id": None if policy_id == DRY_RUN_ID else policy_id,
+            "action": "reused" if reused else ("would_create" if self.dry_run else "created")})
+        print(f"  {'[DRY RUN] ' if self.dry_run else ''}{phase}: requested '{wanted}', actual '{name}', id {policy_id}")
+        return policy_id, name, reused
 
     def _file_policies(self, key: str) -> List[Dict]:
         """The file's policies of one kind; [{}] (defaults) when it has none."""
@@ -1005,8 +1015,7 @@ class Importer:
                 self.report.fail(phase, str(r.get("name", "unnamed")), "not created: no access policy")
             return
         policy_id, policy_name, reused = chosen
-        if several:
-            self.report.scope = policy_name
+        self.report.scope = policy_name
         rules_path = f"policy/accesspolicies/{policy_id}/accessrules"
         # Existing rules of a reused policy, in policy order (FMC ruleIndex = position + 1).
         existing: List[Dict] = []
@@ -1098,8 +1107,7 @@ class Importer:
                 self.report.fail(phase, str(r.get("name") or f"NAT rule #{i}"), "not created: no NAT policy")
             return
         policy_id, policy_name, reused = chosen
-        if several:
-            self.report.scope = policy_name
+        self.report.scope = policy_name
         # A reused policy may already hold these rules (an earlier run). FMC
         # accepts an identical manual NAT rule twice, so check before posting.
         self._existing_nat: Dict[str, List[Tuple]] = {"manual": [], "auto": []}
@@ -1217,6 +1225,69 @@ class Importer:
 
 # --------------------------------------------------------------------------- CLI
 
+def apply_policy_names(data: Dict, access_name: Optional[str] = None,
+                       nat_name: Optional[str] = None) -> Dict:
+    """Validate all overrides before authentication; never mutate the artifact."""
+    result = copy.deepcopy(data)
+    policies = result.get("policies") or {}
+    for key, rules_key, value in (("accesspolicies", "accessrules", access_name),
+                                   ("natpolicies", "natrules", nat_name)):
+        if value is None:
+            continue
+        if not value.strip() or len(value) > 64 or any(ord(c) < 32 for c in value):
+            raise ValueError(f"{key}: name must be 1-64 printable characters")
+        entries = policies.get(key) or []
+        if not isinstance(entries, list) or len(entries) != 1 or not isinstance(entries[0], dict):
+            raise ValueError(f"{key}: naming override requires exactly one policy")
+        old = entries[0].get("name")
+        for rule in policies.get(rules_key) or []:
+            if rule.get("_policy_name") not in (None, "", old):
+                raise ValueError(f"{rules_key}: reference does not name the single file policy")
+            rule["_policy_name"] = value.strip()
+        entries[0]["name"] = value.strip()
+    return result
+
+
+def import_receipt(report: Report, artifact_hash: str, version: Optional[str],
+                   domain: str, dry_run: bool) -> Dict:
+    return {"schema": "nc.fmc-import-receipt.v1", "artifact_sha256": artifact_hash,
+        "importer_version": __version__, "fmc_version": version, "domain_id": domain,
+        "status": "dry_run" if dry_run else ("incomplete" if report.failures else "imported"),
+        "assigned": False, "deployed": False, "policies": report.policies,
+        "counts": report.counts, "object_renames": report.renames,
+        "warnings": report.warnings, "failures": report.failures}
+
+
+def redact_receipt(value: Any, secrets: List[str]) -> Any:
+    """FMC error text can echo input: remove supplied credentials and API tokens."""
+    if isinstance(value, str):
+        for secret in secrets:
+            if secret:
+                value = value.replace(secret, "[REDACTED]")
+        return value
+    if isinstance(value, list):
+        return [redact_receipt(item, secrets) for item in value]
+    if isinstance(value, dict):
+        return {key: redact_receipt(item, secrets) for key, item in value.items()}
+    return value
+
+
+def write_receipt(path: str, receipt: Dict) -> None:
+    """Atomically publish the receipt; keep partial JSON out of the destination."""
+    target = Path(path)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=target.parent,
+                                         prefix=".fmc-receipt-", delete=False) as handle:
+            temporary = handle.name
+            json.dump(receipt, handle, indent=2)
+            handle.write("\n")
+        os.replace(temporary, target)
+    finally:
+        if temporary and os.path.exists(temporary):
+            os.unlink(temporary)
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="NetConverter.AI — Import FMC JSON to Cisco Secure Firewall Management Center",
@@ -1234,6 +1305,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                              "(default: create a uniquely named policy)")
     parser.add_argument("--verify-ssl", action="store_true", help="Verify SSL certificate (default: skip)")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--access-policy-name", help="Override the single access policy name")
+    parser.add_argument("--nat-policy-name", help="Override the single NAT policy name")
+    parser.add_argument("--report-json", help="Write an import receipt (never credentials)")
     args = parser.parse_args(argv)
 
     if requests is None:
@@ -1241,8 +1315,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 1
 
     try:
-        with open(args.json) as f:
-            data = json.load(f)
+        artifact = Path(args.json).read_bytes()
+        data = json.loads(artifact)
     except (OSError, ValueError) as e:
         print(f"ERROR: Cannot read {args.json}: {e}")
         return 1
@@ -1250,6 +1324,19 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"ERROR: {args.json} is not a NetConverter FMC JSON document")
         return 1
 
+    try:
+        data = apply_policy_names(data, args.access_policy_name, args.nat_policy_name)
+        if args.report_json and Path(args.report_json).resolve() == Path(args.json).resolve():
+            raise ValueError("receipt must not overwrite the input JSON")
+        if args.report_json:
+            target = Path(args.report_json)
+            if target.exists() and not target.is_file():
+                raise ValueError("receipt destination must be a file")
+            with tempfile.TemporaryFile(dir=target.parent):
+                pass
+    except (ValueError, OSError) as exc:
+        print(f"ERROR: {exc}")
+        return 1
     password = args.password or getpass(f"Password for {args.user}@{args.host}: ")
     objects = data.get("objects") or {}
     policies = data.get("policies") or {}
@@ -1280,6 +1367,16 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     report = Importer(client, data, dry_run=args.dry_run, reuse_policy=args.reuse_policy).run()
     report.print_summary()
+    if args.report_json:
+        try:
+            receipt = import_receipt(report, hashlib.sha256(artifact).hexdigest(), version,
+                                     client.domain, args.dry_run)
+            for field in ('warnings', 'failures', 'object_renames'):
+                receipt[field] = redact_receipt(receipt[field], [password, getattr(client, "token", ""), getattr(client, "refresh_token", "")])
+            write_receipt(args.report_json, receipt)
+        except OSError as exc:
+            print(f"ERROR: import ran but receipt could not be written: {exc}")
+            return 1
     if not args.dry_run and not report.failures:
         print("Log into FMC to verify, then deploy to the managed devices.")
     return report.exit_code()
