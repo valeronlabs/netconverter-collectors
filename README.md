@@ -28,7 +28,7 @@ Future Cisco collectors (e.g. Catalyst Center) would live under `cisco/<technolo
 | [palo/panorama/](palo/panorama/) | Palo Alto Panorama (XML API) | **Ready** |
 | [palo/firewall/](palo/firewall/) | Palo Alto firewall XML → HTML | **Ready** (HTML only) |
 | [cisco/fmc/](cisco/fmc/) | Secure Firewall Management Center (REST) | **Ready** |
-| [palo/scm/](palo/scm/) | Palo Alto Strata Cloud Manager | Scaffold |
+| `palo/scm/` | Palo Alto Strata Cloud Manager | Scaffold (private; not published) |
 | [fortinet/fortimanager/](fortinet/fortimanager/) | FortiManager (JSON-RPC) | **Ready** |
 
 ## Two-step workflow (every collector)
@@ -76,7 +76,7 @@ MIT — see [LICENSE](LICENSE).
 
 ## Versioning
 
-Each collector is versioned independently (see `VERSIONING.md`). Collect and HTML
+Each collector is versioned independently (published versions: `collectors.lock.json`). Collect and HTML
 for a technology share one `__version__`. The current shipped versions are in
 `collectors.lock.json`. After any change: bump entry + HTML `__version__`, update
 `CHANGELOG.md`, then run `python3 scripts/gen_collectors_lock.py`.

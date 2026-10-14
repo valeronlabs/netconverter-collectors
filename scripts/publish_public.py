@@ -42,7 +42,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLISH_STATUS = frozenset({"ready", "library"})
 
 # Root-level files this script owns in the target.
-ROOT_FILES = ("LICENSE", "VERSIONING.md")
+ROOT_FILES = ("LICENSE",)
+
+# Root-level target files published from a different source path. The private AGENTS.md
+# describes the private workflow; the public tree gets its own pointer.
+ROOT_SOURCES = {Path("AGENTS.md"): Path("public/AGENTS.md")}
+
+# Root-level files that earlier versions published and this one removes from the target.
+# VERSIONING.md describes the private release workflow.
+RETIRED_ROOT_FILES = ("VERSIONING.md",)
 
 # Extra managed folders that are not collectors. scripts/ ships so a reader can
 # regenerate the lockfile and verify the published tree themselves.
@@ -103,6 +111,9 @@ def iter_source_files(folders: list[str]) -> list[Path]:
         p = REPO_ROOT / name
         if p.is_file():
             out.append(Path(name))
+    for rel, source in ROOT_SOURCES.items():
+        if (REPO_ROOT / source).is_file():
+            out.append(rel)
     for folder_rel in folders:
         folder = REPO_ROOT / folder_rel
         if not folder.is_dir():
@@ -244,7 +255,7 @@ def main() -> int:
 
     changed = added = 0
     for rel in files:
-        src, dst = REPO_ROOT / rel, target / rel
+        src, dst = REPO_ROOT / ROOT_SOURCES.get(rel, rel), target / rel
         if not dst.exists():
             added += 1
             verb = "add"
@@ -262,6 +273,12 @@ def main() -> int:
         print(f"  delete  {rel}")
         if not args.dry_run:
             (target / rel).unlink()
+
+    for name in RETIRED_ROOT_FILES:
+        if (target / name).is_file():
+            print(f"  delete  {name}")
+            if not args.dry_run:
+                (target / name).unlink()
 
     lock_text = filtered_lock(lock)
     lock_path = target / "collectors.lock.json"
