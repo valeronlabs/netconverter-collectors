@@ -136,6 +136,13 @@ Tested with FMC 7.2+ through 7.6.5. The script uses stable v1 REST API endpoints
 
 MIT License - see [LICENSE](../LICENSE) for details.
 
+## Version 2.4.0: URL feeds
+
+URL lists from the converter are created as Security Intelligence URL feeds
+(`object/siurlfeeds`), like network feeds. Domain lists are not created: FMC refuses DNS feeds
+over its REST API, so the converter lists them as a manual step. If your FMC has no feed
+collection of that kind, the importer says which kind (Network or URL) to create in the FMC UI.
+
 ## Version 2.3.0: policy names and import receipts
 
 ```sh

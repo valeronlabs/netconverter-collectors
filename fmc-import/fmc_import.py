@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-NetConverter.AI — FMC Import Script  (version 2.3.0)
+NetConverter.AI — FMC Import Script  (version 2.4.0)
 
 Imports a NetConverter FMC JSON file into a Cisco Secure Firewall Management Center
 via the FMC REST API. Run this on any machine that can reach your FMC.
@@ -42,6 +42,10 @@ Behaviour you can rely on:
 
 Changelog
 ---------
+2.4.0 (2026-10-20)  objects.urlfeeds (SIURLFeed) are created like network feeds, at
+                    object/siurlfeeds. Before, the converter emitted URL lists as
+                    network feeds. Domain lists are not posted: FMC refuses DNS
+                    feeds over REST (HTTP 405); the converter declares them.
 2.3.0 (2026-10-04)  Single-policy naming overrides, requested/actual policy identities,
                     per-policy counts and optional JSON import receipts. No assignment/deployment.
 2.2.1 (2026-10-04)  A session FMC invalidated mid-import (another login with the same
@@ -117,7 +121,7 @@ from datetime import datetime, timezone
 from getpass import getpass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-__version__ = "2.3.0"
+__version__ = "2.4.0"
 
 try:
     import requests
@@ -143,6 +147,10 @@ _NETWORK_FAMILY = ["object/networks", "object/hosts", "object/ranges", "object/f
 # with how to create it in the FMC UI.
 NETWORK_FEED_PATH = "object/sinetworkfeeds"
 NETWORK_FEED_TYPE = "SINetworkFeed"
+# URL lists are their own Security Intelligence feed kind
+# (FMC-FEED-KIND-AND-ZONE-MODES): the converter's "urlfeeds". DNS feeds are not
+# posted: lab FMC 7.6.5 answers POST object/sidnsfeeds with HTTP 405.
+URL_FEED_PATH = "object/siurlfeeds"
 LOOKUP_PATHS: Dict[str, List[str]] = {
     "Host": ["object/hosts"],
     "Network": _NETWORK_FAMILY,
@@ -150,6 +158,7 @@ LOOKUP_PATHS: Dict[str, List[str]] = {
     "FQDN": ["object/fqdns"],
     "NetworkFeed": [NETWORK_FEED_PATH],
     NETWORK_FEED_TYPE: [NETWORK_FEED_PATH],
+    "SIURLFeed": [URL_FEED_PATH],
     "NetworkGroup": ["object/networkgroups"],
     "ProtocolPortObject": ["object/protocolportobjects"],
     "PortObjectGroup": ["object/portobjectgroups"],
@@ -187,6 +196,7 @@ OBJECT_PUSH_ORDER = [
     ("ranges", "object/ranges"),
     ("fqdns", "object/fqdns"),
     ("networkfeeds", NETWORK_FEED_PATH),
+    ("urlfeeds", URL_FEED_PATH),
     ("protocolportobjects", "object/protocolportobjects"),
     ("icmpv4objects", "object/icmpv4objects"),
     ("icmpv6objects", "object/icmpv6objects"),
@@ -752,9 +762,10 @@ class Importer:
                     f"policy (FMC allows one per object) — {text}")
         elif resp.status_code == 400 and "already exists" in low:
             text = f"name collision — {text}"
-        elif resp.status_code == 404 and path == NETWORK_FEED_PATH:
+        elif resp.status_code == 404 and path in (NETWORK_FEED_PATH, URL_FEED_PATH):
+            kind = {NETWORK_FEED_PATH: "Network", URL_FEED_PATH: "URL"}[path]
             text = (f"this FMC has no REST collection {path}; create the feed manually in the "
-                    "FMC UI (Objects > Object Management > Security Intelligence > Network "
+                    f"FMC UI (Objects > Object Management > Security Intelligence > {kind} "
                     "Lists and Feeds); rules that reference it are not created by this tool "
                     f"— {text}")
         self.report.fail(phase, name, text, resp.status_code)
