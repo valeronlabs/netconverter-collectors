@@ -1,0 +1,36 @@
+{
+  "collectors": {
+    "checkpoint": {
+      "entry": "checkpoint/smartconsole/checkpoint_collect_data.py",
+      "sha256": "9285a8a1651cb0b8401a6825785420e604a69a82201d57773182525c33ceff4d",
+      "status": "ready",
+      "version": "1.5.6"
+    },
+    "core": {
+      "entry": "core/manifest.py",
+      "sha256": "e9c0b66aa8df8921ad99e2424af5c28d285d12945135329a3401efe0caff34bf",
+      "status": "library",
+      "version": "1.3.0"
+    },
+    "fmc": {
+      "entry": "cisco/fmc/fmc_collect_data.py",
+      "sha256": "d92bda145b26536c5f48b77f3eee3d0225ad7a5e7e638b8dd87d3398051e04d0",
+      "status": "ready",
+      "version": "2.3.5"
+    },
+    "fortinet": {
+      "entry": "fortinet/fortimanager/fortimanager_collect.py",
+      "sha256": "af3e331df5be94b820a8b456c3e2d8cfa092b422e033a0868ac5af513d202384",
+      "status": "ready",
+      "version": "1.4.0"
+    },
+    "palo": {
+      "entry": "palo/panorama/panorama_export.py",
+      "sha256": "9afd0cdc1968bd9a7b78cf230de8ac7b6a4fba39d47ae84a9f66dd9fb3a71aaf",
+      "status": "ready",
+      "version": "1.8.0"
+    }
+  },
+  "generated_at": "2026-11-25T17:22:39Z",
+  "schema": 1
+}

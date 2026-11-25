@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "direction": "A \u2014 Precision Outline",
+  "icons": [
+    "nc-api",
+    "nc-cloud",
+    "nc-collector",
+    "nc-database",
+    "nc-firewall",
+    "nc-flow",
+    "nc-gateway",
+    "nc-ha-cluster",
+    "nc-host",
+    "nc-interface",
+    "nc-internet",
+    "nc-load-balancer",
+    "nc-mcp",
+    "nc-nat",
+    "nc-policy",
+    "nc-route",
+    "nc-router",
+    "nc-security-zone",
+    "nc-server",
+    "nc-storage",
+    "nc-subnet",
+    "nc-switch",
+    "nc-vpn",
+    "nc-wireless-ap"
+  ]
+}
